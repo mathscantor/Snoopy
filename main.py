@@ -19,13 +19,9 @@ def main():
     while True:
         raw_data, addr = s.recvfrom(65565)
         packet = Packet(raw_data=raw_data)
-        if packet.get_ethernet_type() == NetworkType.IPV4:
-            packet.print_ethernet_data()
-            packet.print_ip_data()
-            packet.print_protocol_data()
-
-            print("----------------------------------------------------------------------------------------")
-
+        packet.print_packet()
+        print("--------------------------------------------------------------------------------------------")
+    return
 
 if __name__ == '__main__':
     main()
