@@ -2,7 +2,7 @@ import socket
 from utils.packet import Packet
 import struct
 import fcntl
-from utils.mappings import *
+import gc
 
 
 def get_ip_address_from_nic(nic: str) -> str:
@@ -20,7 +20,9 @@ def main():
         raw_data, addr = s.recvfrom(65565)
         packet = Packet(raw_data=raw_data)
         packet.print_packet()
+        del packet
         print("--------------------------------------------------------------------------------------------")
+        gc.collect()
     return
 
 if __name__ == '__main__':

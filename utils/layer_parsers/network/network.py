@@ -1,6 +1,6 @@
 import struct
-from utils.mappings import NetworkType
-from utils.mappings import TransportType
+from utils.layer_parsers.link.mappings import NetworkType
+from utils.layer_parsers.network.mappings import TransportType
 from ipaddress import IPv6Address
 from ipaddress import IPv4Address
 
@@ -11,7 +11,7 @@ class NetworkLayer:
 
         self.__network_type = network_type
         if self.__network_type == NetworkType.UNKNOWN:
-            print("Error in network type! Unable to do parsing in utils/layers/network.py!")
+            print("Error in network type! Unable to do parsing in utils/layer_parsers/network.py!")
             print("Exiting...")
             exit(1)
 
@@ -69,13 +69,6 @@ class NetworkLayer:
         self.__ipv6_src_ip = format(IPv6Address(bytes_src_ip))
         self.__ipv6_dest_ip = format(IPv6Address(bytes_dest_ip))
         self.__transport_data = self.__network_data[40:]
-
-        # self.__ipv6_flow_label = self.__network_data[1:4]
-        # self.__ipv6_payload = self.__network_data[4:6]
-        # self.__transport_type = self.network_data[6]
-        # self.__ipv6_hop_limit = self.__network_data[7]
-        # self.__ipv6_src_ip = self.__network_data[8:24]
-        # self.__ipv6_dest_ip = self.__network_data[25:40]
         return
 
     def form_proper_ipv4(self, addr):
@@ -102,6 +95,12 @@ class NetworkLayer:
 
     def get_time_to_live(self):
         return self.ipv4_time_to_live
+
+    def print_raw_transport_data(self):
+        if self.__transport_data is not None and len(self.__transport_data) > 0:
+            print("raw transport data:")
+            print(self.__transport_data)
+        return
 
     def print_network_data(self):
         if self.__network_type == NetworkType.IPV4:

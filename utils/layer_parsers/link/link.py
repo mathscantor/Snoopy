@@ -1,5 +1,5 @@
 import struct
-from utils.mappings import NetworkType
+from utils.layer_parsers.link.mappings import NetworkType
 
 
 class LinkLayer:
@@ -47,7 +47,8 @@ class LinkLayer:
                                            self.__network_type.name))
         return
 
-    def print_network_data(self):
-        print("raw network data:")
-        print(self.__network_data)
+    def print_raw_network_data(self):
+        if self.__network_data is not None and len(self.__network_data) > 0:
+            print("raw network data:")
+            print(self.__network_data)
         return

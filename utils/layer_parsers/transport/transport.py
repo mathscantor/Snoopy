@@ -1,6 +1,7 @@
-from utils.mappings import TransportType
-from utils.mappings import ApplicationType
+from utils.layer_parsers.network.mappings import *
+from utils.layer_parsers.transport.mappings import *
 import struct
+
 
 class TransportLayer:
 
@@ -8,7 +9,7 @@ class TransportLayer:
 
         self.__transport_type = transport_type
         if self.__transport_type == TransportType.UNKNOWN:
-            print("Error in transport type! Unable to do parsing in utils/layers/transport.py!")
+            print("Error in transport type! Unable to do parsing in utils/layer_parsers/transport.py!")
             print("Exiting...")
             exit(1)
 
@@ -45,7 +46,15 @@ class TransportLayer:
         self.__tcp_flag_rst = None
         self.__tcp_flag_syn = None
         self.__tcp_flag_fin = None
+
         self.parse_transport_data()
+        return
+
+    def is_padding(self, byte_string):
+        for b in byte_string:
+            if b != 0:
+                return False
+        return True
 
     def parse_transport_data(self):
         if self.__transport_type == TransportType.ICMP:
@@ -74,6 +83,17 @@ class TransportLayer:
         self.__tcp_flag_syn = (offset_reserved_flags & 2) >> 1
         self.__tcp_flag_fin = offset_reserved_flags & 1
         self.__application_data = self.__transport_data[self.__tcp_header_length:]
+
+        if len(self.__application_data) == 0:
+            return
+
+        if self.is_padding(self.__application_data):
+            return
+
+        self.__application_type = ApplicationType(self.__src_port)
+        if self.__application_type != ApplicationType.UNKNOWN:
+            return
+
         self.__application_type = ApplicationType(self.__dest_port)
         return
 
@@ -82,6 +102,17 @@ class TransportLayer:
         self.__src_port, self.__dest_port, \
             self.__udp_length, self.__udp_checksum = struct.unpack('! H H H H', self.__transport_data[:8])
         self.__application_data = self.__transport_data[8:]
+
+        if len(self.__application_data) == 0:
+            return
+
+        if self.is_padding(self.__application_data):
+            return
+
+        self.__application_type = ApplicationType(self.__src_port)
+        if self.__application_type != ApplicationType.UNKNOWN:
+            return
+
         self.__application_type = ApplicationType(self.__dest_port)
         return
 
@@ -90,6 +121,7 @@ class TransportLayer:
             self.__sctp_verification_tag, self.__sctp_checksum, \
             self.__sctp_chunk_type, self.__sctp_chunk_flags,\
             self.__sctp_chunk_length = struct.unpack('! H H L L B B H', self.__transport_data[:16])
+        self.__sctp_chunk_type = SCTPType(self.__sctp_chunk_type)
         return
 
     def get_application_type(self):
@@ -140,6 +172,14 @@ class TransportLayer:
     def get_tcp_flag_fin(self):
         return self.__tcp_flag_fin
 
+    def print_transport_payload(self):
+        if self.__application_data is not None and \
+                len(self.__application_data) > 0 and \
+                not self.is_padding(self.__application_data):
+            print("Transport Payload ({} bytes):".format(len(self.__application_data)))
+            print(self.__application_data)
+        return
+
     def print_transport_data(self):
         if self.__transport_type == TransportType.ICMP:
             self.__print_icmp_data()
@@ -184,7 +224,7 @@ class TransportLayer:
                                     self.__tcp_flag_syn,
                                     self.__tcp_flag_fin))
 
-        if self.__application_type != ApplicationType.UNKNOWN:
+        if self.__application_type is not None and len(self.__application_data) > 0:
             print("\t+Application Type: {}".format(self.__application_type.name))
         return
 
@@ -195,12 +235,12 @@ class TransportLayer:
               "\t+Destination Port: {}\n"
               "\t+Length: {}\n"
               "\t+Checksum: {}".format(self.__src_port,
-                                         self.__dest_port,
-                                         self.__udp_length,
-                                         self.__udp_checksum))
-        if self.__application_type != ApplicationType.UNKNOWN:
-            print("\t+Application Type: {}".format(self.__application_type.name))
+                                       self.__dest_port,
+                                       self.__udp_length,
+                                       self.__udp_checksum))
 
+        if self.__application_type is not None and len(self.__application_data) > 0:
+            print("\t+Application Type: {}".format(self.__application_type.name))
         return
 
     def __print_sctp_data(self):
@@ -215,7 +255,7 @@ class TransportLayer:
                                            self.__dest_port,
                                            self.__sctp_verification_tag,
                                            self.__sctp_checksum,
-                                           self.__sctp_chunk_type,
+                                           self.__sctp_chunk_type.name,
                                            self.__sctp_chunk_flags,
                                            self.__sctp_chunk_length))
         return
