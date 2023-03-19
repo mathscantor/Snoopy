@@ -1,4 +1,4 @@
-from utils.layer_parsers.transport.mappings import *
+from utils.layer_parsers.application.application import ApplicationType
 from utils.layer_parsers.transport.transport import TransportLayer
 import struct
 

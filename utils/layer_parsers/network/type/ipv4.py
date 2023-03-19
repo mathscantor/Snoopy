@@ -1,4 +1,4 @@
-from utils.layer_parsers.network.mappings import *
+from utils.layer_parsers.transport.transport import TransportType
 from ipaddress import IPv4Address
 import struct
 from utils.layer_parsers.network.network import NetworkLayer

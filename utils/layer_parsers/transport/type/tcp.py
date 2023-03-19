@@ -1,4 +1,4 @@
-from utils.layer_parsers.transport.mappings import *
+from utils.layer_parsers.application.application import ApplicationType
 from utils.layer_parsers.transport.transport import TransportLayer
 import struct
 
@@ -45,7 +45,7 @@ class TCP(TransportLayer):
         self._application_type = ApplicationType(self._dest_port)
         return
 
-    def _print_data(self):
+    def print_data(self):
         print("TCP Data:")
         print("\t+Source Port: {}\n"
               "\t+Destination Port: {}\n"

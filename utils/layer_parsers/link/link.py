@@ -1,7 +1,25 @@
+from enum import Enum
+
+
+class LinkType(Enum):
+
+    ETHER = 0x01
+    UNKNOWN = 0xff
+
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
+
+
 class LinkLayer:
 
-    def __init__(self, raw_data):
-        self.raw_data = raw_data
+    def __init__(self, link_type, link_data):
+        self._link_type = link_type
+        if self._link_type == LinkType.UNKNOWN:
+            print("Error in transport type! Unable to do parsing in utils/layer_parsers/transport.py!")
+            print("Exiting...")
+            exit(1)
+        self._link_data = link_data
         self._dest_mac = None
         self._src_mac = None
         self._network_type = None

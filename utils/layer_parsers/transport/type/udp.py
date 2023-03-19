@@ -1,4 +1,4 @@
-from utils.layer_parsers.transport.mappings import *
+from utils.layer_parsers.application.application import ApplicationType
 from utils.layer_parsers.transport.transport import TransportLayer
 import struct
 
@@ -9,6 +9,7 @@ class UDP(TransportLayer):
         TransportLayer.__init__(self, transport_type, transport_data)
         self._length = None
         self._checksum = None
+        self._parse_data()
 
     def _parse_data(self):
         # UDP header length is always 8 bytes
@@ -29,7 +30,7 @@ class UDP(TransportLayer):
         self._application_type = ApplicationType(self._dest_port)
         return
 
-    def _print_data(self):
+    def print_data(self):
         print("UDP Data:")
         print("\t+Source Port: {}\n"
               "\t+Destination Port: {}\n"
