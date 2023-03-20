@@ -3,6 +3,10 @@ from utils.packet import Packet
 import struct
 import fcntl
 import gc
+from utils.layer_parsers.link import *
+from utils.layer_parsers.network import *
+from utils.layer_parsers.transport import *
+from utils.layer_parsers.application import *
 
 
 def get_ip_address_from_nic(nic: str) -> str:
@@ -19,9 +23,12 @@ def main():
     while True:
         raw_data, addr = s.recvfrom(65565)
         packet = Packet(raw_data=raw_data)
-        packet.print_packet()
+        if packet.application_layer is None:
+            continue
+        if packet.application_layer.message_type == PFCPMessageType.SESSION_ESTABLISHMENT_REQUEST:
+            packet.print_packet()
+            print("--------------------------------------------------------------------------------------------")
         del packet
-        print("--------------------------------------------------------------------------------------------")
         gc.collect()
     return
 

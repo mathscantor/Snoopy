@@ -477,9 +477,8 @@ class IE_NodeId(IE):
 
     def _parse_data(self):
         self._spare = self._ie_payload[0] >> 4
-        self._nodeid_type = NodeIdType(self._ie_payload[0] & 0xf)
+        self._nodeid_type = NodeIdType(self._ie_payload[0] & 0x0f)
 
-        print("CCC", self._ie_payload[1:self._ie_length])
         if self._nodeid_type == NodeIdType.IPV4:
             self._node_ip = IPv4Address(self._ie_payload[1:self._ie_length])
         elif self._nodeid_type == NodeIdType.IPV6:
@@ -509,6 +508,107 @@ class IE_NodeId(IE):
         return self._node_ip
 
 
+class IE_FSEID(IE):
+    def __init__(self, ie_length, ie_payload):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.F_SEID
+
+        self._spare1 = None
+        self._spare2 = None
+        self._spare3 = None
+        self._spare4 = None
+        self._spare5 = None
+        self._spare6 = None
+        self._ipv4_flag = None
+        self._ipv6_flag = None
+        self._seid = None
+        self._ipv4_address = None
+        self._ipv6_address = None
+        self._parse_data()
+
+    def _parse_data(self):
+        self._spare1 = (self._ie_payload[0] >> 7) & 0x1
+        self._spare2 = (self._ie_payload[0] >> 6) & 0x1
+        self._spare3 = (self._ie_payload[0] >> 5) & 0x1
+        self._spare4 = (self._ie_payload[0] >> 4) & 0x1
+        self._spare5 = (self._ie_payload[0] >> 3) & 0x1
+        self._spare6 = (self._ie_payload[0] >> 2) & 0x1
+        self._ipv4_flag = (self._ie_payload[0] >> 1) & 0x1
+        self._ipv6_flag = self._ie_payload[0] & 0x1
+
+        limit = 9
+        self._seid = int.from_bytes(self._ie_payload[1:limit], 'big')
+        if self._ipv4_flag == 1:
+            self._ipv4_address = IPv4Address(self._ie_payload[limit: limit+4])
+            limit += 4
+        if self._ipv6_flag == 1:
+            self._ipv6_address = IPv6Address(self._ie_payload[limit: limit+16])
+
+        return
+
+    def print_data(self):
+        print("IE Type: {}, IE Length: {}\n"
+              "\t+Spare1: {}\n"
+              "\t+Spare2: {}\n"
+              "\t+Spare3: {}\n,"
+              "\t+Spare4: {}\n,"
+              "\t+Spare5: {}\n,"
+              "\t+Spare6: {}\n,"
+              "\t+IPv4 Flag: {}\n"
+              "\t+IPv6 Flag: {}\n"
+              "\t+SEID: {}\n"
+              "\t+IPv4 Address: {}\n"
+              "\t+IPv6 Address: {}".format(self._ie_type.name, self._ie_length,
+                                           self._spare1, self._spare2, self._spare3, self._spare4, self.spare5,
+                                           self.spare6, self._ipv4_flag, self._ipv6_flag, self._seid,
+                                           self._ipv4_address, self._ipv6_address))
+        return
+
+    @property
+    def spare1(self):
+        return self._spare1
+
+    @property
+    def spare2(self):
+        return self._spare2
+
+    @property
+    def spare3(self):
+        return self._spare3
+
+    @property
+    def spare4(self):
+        return self._spare4
+
+    @property
+    def spare5(self):
+        return self._spare5
+
+    @property
+    def spare6(self):
+        return self._spare6
+
+    @property
+    def ipv4_flag(self):
+        return self._ipv4_flag
+
+    @property
+    def ipv6_flag(self):
+        return self._ipv6_flag
+
+    @property
+    def seid(self):
+        return self._seid
+
+    @property
+    def ipv4_address(self):
+        return self._ipv4_address
+
+    @property
+    def ipv6_address(self):
+        return self._ipv6_address
+
+
 class PFCP(ApplicationLayer):
 
     def __init__(self, application_type, application_data, src_port, dest_port):
@@ -530,14 +630,13 @@ class PFCP(ApplicationLayer):
         self._parse_data()
 
     def _parse_data(self):
-        greedy_payload = None
         self._flags = self._application_data[0]
-        self._flag_version = self._flags >> 5
-        self._flag_spare1 = self._flags >> 4
-        self._flag_spare2 = self._flags >> 3
-        self._flag_follow_on = self._flags >> 2
-        self._flag_message_priority = self._flags >> 1
-        self._flag_seid = self._flags & 1
+        self._flag_version = self._flags >> 5                   # xxx. ....
+        self._flag_spare1 = (self._flags >> 4) & 0x1            # ...x ....
+        self._flag_spare2 = (self._flags >> 3) & 0x1            # .... x...
+        self._flag_follow_on = (self._flags >> 2) & 0x1         # .... .x..
+        self._flag_message_priority = (self._flags >> 1) & 0x1  # .... ..x.
+        self._flag_seid = self._flags & 0x1                     # .... ...x
 
         if self._flag_seid == 1:
             if self._flag_message_priority == 0:
@@ -563,12 +662,10 @@ class PFCP(ApplicationLayer):
         self._message_type = PFCPMessageType(self._message_type)
         self._sequence_number = int.from_bytes(self._sequence_number, 'big')
 
-        print("@@@", len(greedy_payload))
+        #print("@@@", len(greedy_payload))
         if len(greedy_payload) == 0:
-            print("HERE")
             return
         else:
-            print("HERE1")
             self._ie_list = []
 
         # Parse greedy payload here into their individual IEs
@@ -578,14 +675,22 @@ class PFCP(ApplicationLayer):
             ie_type_int, ie_length = struct.unpack('! H H', greedy_payload[0:4])
             ie_type = IEType(ie_type_int)
             print("BBB", ie_type.name)
-            if ie_type == IEType.NODE_ID:
-                ie_obj = IE_NodeId(ie_length=ie_length, ie_payload=greedy_payload[4: 4+ie_length])
-                self._ie_list.append(ie_obj)
 
+            ie_obj = self._select_ie(ie_type=ie_type, ie_length=ie_length, ie_payload=greedy_payload[4: 4 + ie_length])
+            if ie_obj is not None:
+                self._ie_list.append(ie_obj)
             greedy_payload = greedy_payload[4+ie_length:]
             print("AHHHH", len(greedy_payload))
-
         return
+
+    # TODO: Account for other IE classes
+    def _select_ie(self, ie_type, ie_length, ie_payload):
+        ie_obj = None
+        if ie_type == IEType.NODE_ID:
+            ie_obj = IE_NodeId(ie_length=ie_length, ie_payload=ie_payload)
+        elif ie_type == IEType.F_SEID:
+            ie_obj = IE_FSEID(ie_length=ie_length, ie_payload=ie_payload)
+        return ie_obj
 
     def print_data(self):
         self._print_pfcp_init()
@@ -597,10 +702,12 @@ class PFCP(ApplicationLayer):
         print("\t+Flags: {}\n"
               "\t+Message Type: {}\n"
               "\t+Length: {}\n"
+              "\t+SEID: {}\n"
               "\t+Sequence Number: {}\n"
               "\t+Spare: {}".format(self._flags,
                                     self._message_type.name,
                                     self._length,
+                                    self._seid if self._seid is not None else None,
                                     self._sequence_number,
                                     self._spare))
         return
@@ -616,3 +723,7 @@ class PFCP(ApplicationLayer):
         for ie_obj in self._ie_list:
             ie_obj.print_data()
         return
+
+    @property
+    def message_type(self):
+        return self._message_type
