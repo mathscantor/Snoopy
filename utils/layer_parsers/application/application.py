@@ -33,3 +33,11 @@ class ApplicationLayer:
     def print_data(self):
         # To be overwritten by child class
         pass
+
+    @property
+    def application_type(self):
+        return self._application_type
+
+    @property
+    def application_data(self):
+        return self._application_data

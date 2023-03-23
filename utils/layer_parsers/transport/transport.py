@@ -53,6 +53,14 @@ class TransportLayer:
         return True
 
     @property
+    def transport_type(self):
+        return self._transport_type
+
+    @property
+    def transport_data(self):
+        return self._transport_data
+
+    @property
     def application_type(self):
         return self._application_type
 

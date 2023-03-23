@@ -44,6 +44,14 @@ class NetworkLayer():
         return
 
     @property
+    def network_type(self):
+        return self._network_type
+
+    @property
+    def network_data(self):
+        return self._network_data
+
+    @property
     def version(self):
         return self._version
 

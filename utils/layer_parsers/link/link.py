@@ -46,6 +46,14 @@ class LinkLayer:
         return
 
     @property
+    def link_type(self):
+        return self._link_type
+
+    @property
+    def link_data(self):
+        return self._link_data
+
+    @property
     def dest_mac(self):
         return self._dest_mac
 

@@ -1,8 +1,9 @@
-from utils.layer_parsers.application.application import ApplicationLayer
+from utils.layer_parsers.application.application import *
 import struct
 from enum import Enum
 from ipaddress import IPv4Address, IPv6Address
 from scapy.layers.dns import DNS
+from datetime import datetime
 
 
 class PFCPMessageType(Enum):
@@ -209,7 +210,7 @@ class IEType(Enum):
         return cls.UNKNOWN
 
 
-class CauseValues(Enum):
+class CauseValuesType(Enum):
     RESERVED = 0
     REQUEST_ACCEPTED = 1
     REQUEST_REJECTED = 64
@@ -233,7 +234,7 @@ class CauseValues(Enum):
         return cls.UNKNOWN
 
 
-class SourceInterface(Enum):
+class SourceInterfaceType(Enum):
     ACCESS = 0
     CORE = 1
     SGI_LAN_N6_LAN = 2
@@ -245,7 +246,7 @@ class SourceInterface(Enum):
         return cls.UNKNOWN
 
 
-class DestinationInterface(Enum):
+class DestinationInterfaceType(Enum):
     ACCESS = 0
     CORE = 1
     SGI_LAN_N6_LAN = 2
@@ -270,7 +271,7 @@ class RedirectAddressType(Enum):
         return cls.UNKNOWN
 
 
-class GateStatus(Enum):
+class GateStatusType(Enum):
     OPEN = 0
     CLOSED = 1
     CLOSED_RESERVED_2 = 2
@@ -282,7 +283,7 @@ class GateStatus(Enum):
         return cls.UNKNOWN
 
 
-class TimerUnit(Enum):
+class TimerUnitType(Enum):
     TWO_SECONDS = 0
     ONE_MINUTE = 1
     TEN_MINUTES = 2
@@ -296,7 +297,7 @@ class TimerUnit(Enum):
         return cls.UNKNOWN
 
 
-class OuterHeaderRemovalDescription(Enum):
+class OuterHeaderRemovalDescriptionType(Enum):
     GTP_U_UDP_IPV4 = 0
     GTP_U_UDP_IPV6 = 1
     UDP_IPV4 = 2
@@ -335,7 +336,7 @@ class FqCSIDNodeIdType(Enum):
         return cls.UNKNOWN
 
 
-class FlowDirection(Enum):
+class FlowDirectionType(Enum):
     UNSPECIFIED = 0
     DOWNLINK = 1  # traffic to the UE
     UPLINK = 2  # traffic from the UE
@@ -351,7 +352,7 @@ class FlowDirection(Enum):
         return cls.UNKNOWN
 
 
-class TimeUnit(Enum):
+class TimeUnitType(Enum):
     MINUTE = 0
     MIN6 = 1
     HOUR = 2
@@ -402,7 +403,7 @@ class RuleIDType(Enum):
         return cls.UNKNOWN
 
 
-class BaseTimeInterval(Enum):
+class BaseTimeIntervalType(Enum):
     CTP = 0
     DTP = 1
     UNKNOWN = 0xFF
@@ -438,35 +439,111 @@ class InterfaceType(Enum):
 
 class IE:
 
-    def __init__(self, ie_length, ie_payload):
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
         self._ie_type = IEType.UNKNOWN
         self._ie_length = ie_length
         self._ie_payload = ie_payload
+        self._ie_list = None # Only relevant to Grouped IEs
 
-    def _parse_payload(self):
+    def _parse_data(self):
         # To be overwritten by child class
         pass
+
+    def _parse_grouped_data(self):
+        greedy_payload = self._ie_payload
+        if len(greedy_payload) == 0:
+            return
+        else:
+            self._ie_list = []
+        while len(greedy_payload) > 0:
+            # First 4 bytes -- IE Type (2 bytes) and IE Length (2 bytes)
+            ie_type_int, ie_length = struct.unpack('! H H', greedy_payload[0:4])
+            ie_type = IEType(ie_type_int)
+            ie_obj = select_ie(ie_type=ie_type, ie_length=ie_length, ie_payload=greedy_payload[4: 4 + ie_length])
+            if ie_obj is not None:
+                self._ie_list.append(ie_obj)
+            greedy_payload = greedy_payload[4 + ie_length:]
+        return
 
     def print_data(self):
-        # To be overwritten by child class
+        self._print_init()
+        self._print_ie_list()
         pass
 
+    def _print_init(self):
+        # To be overwritten by child class
+        return
+
+    def _print_ie_list(self):
+        if self._ie_list is None:
+            return
+
+        if len(self._ie_list) == 0:
+            return
+
+        for ie_obj in self._ie_list:
+            ie_obj.print_data()
+        return
+
     @property
-    def ie_type(self):
+    def ie_type(self) -> IEType:
         return self._ie_type
 
     @property
-    def ie_length(self):
+    def ie_length(self) -> int:
         return self._ie_length
 
     @property
-    def ie_payload(self):
+    def ie_payload(self) -> bytes:
         return self._ie_payload
+
+    @property
+    def ie_list(self) -> list:
+        return self._ie_list
+
+
+
+class IE_RecoveryTimeStamp(IE):
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.RECOVERY_TIME_STAMP
+        self._recovery_timestamp_epoch = None
+        self._recovery_timestamp_datetime = None
+        self._parse_data()
+
+    def _parse_data(self):
+        # Magic Number
+        self._recovery_timestamp_epoch = struct.unpack('! L', self._ie_payload[0: self._ie_length])[0] - 2208988800
+        self._recovery_timestamp_datetime = datetime.utcfromtimestamp(self._recovery_timestamp_epoch)
+        return
+
+    def _print_init(self):
+        print("IE Type: {}, IE Length: {}\n"
+              "\t+Recovery Timestamp:\n"
+              "\t\t+Epoch: {}\n"
+              "\t\t+Datetime: {}".format(self._ie_type.name, self._ie_length,
+                                         self._recovery_timestamp_epoch,
+                                         self._recovery_timestamp_datetime.strftime('%d-%m-%Y %H:%M:%S')))
+        return
+
+    @property
+    def recovery_timestamp_epoch(self) -> int:
+        return self._recovery_timestamp_epoch
+
+    @property
+    def recovery_timestamp_datetime(self) -> datetime:
+        return self._recovery_timestamp_datetime
 
 
 class IE_NodeId(IE):
 
-    def __init__(self, ie_length, ie_payload):
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
         IE.__init__(self, ie_length, ie_payload)
         self._ie_type = IEType.NODE_ID
 
@@ -487,29 +564,31 @@ class IE_NodeId(IE):
             self._node_ip = DNS(self._ie_payload[1:self._ie_length])
         return
 
-    def print_data(self):
+    def _print_init(self):
         print("IE Type: {}, IE Length: {}\n"
               "\t+Spare: {}, Address Type: {}\n"
               "\t+Address: {}".format(self._ie_type.name, self._ie_length,
-                                      self._spare, self._nodeid_type,
+                                      self._spare, self._nodeid_type.name,
                                       self._node_ip))
         return
 
     @property
-    def spare(self):
+    def spare(self) -> int:
         return self._spare
 
     @property
-    def nodeid_type(self):
+    def nodeid_type(self) -> NodeIdType:
         return self._nodeid_type
 
     @property
-    def node_ip(self):
+    def node_ip(self) -> str:
         return self._node_ip
 
 
 class IE_FSEID(IE):
-    def __init__(self, ie_length, ie_payload):
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
         IE.__init__(self, ie_length, ie_payload)
         self._ie_type = IEType.F_SEID
 
@@ -546,7 +625,7 @@ class IE_FSEID(IE):
 
         return
 
-    def print_data(self):
+    def _print_init(self):
         print("IE Type: {}, IE Length: {}\n"
               "\t+Spare1: {}\n"
               "\t+Spare2: {}\n"
@@ -565,53 +644,302 @@ class IE_FSEID(IE):
         return
 
     @property
-    def spare1(self):
+    def spare1(self) -> int:
         return self._spare1
 
     @property
-    def spare2(self):
+    def spare2(self) -> int:
         return self._spare2
 
     @property
-    def spare3(self):
+    def spare3(self) -> int:
         return self._spare3
 
     @property
-    def spare4(self):
+    def spare4(self) -> int:
         return self._spare4
 
     @property
-    def spare5(self):
+    def spare5(self) -> int:
         return self._spare5
 
     @property
-    def spare6(self):
+    def spare6(self) -> int:
         return self._spare6
 
     @property
-    def ipv4_flag(self):
+    def ipv4_flag(self) -> int:
         return self._ipv4_flag
 
     @property
-    def ipv6_flag(self):
+    def ipv6_flag(self) -> int:
         return self._ipv6_flag
 
     @property
-    def seid(self):
+    def seid(self) -> int:
         return self._seid
 
     @property
-    def ipv4_address(self):
+    def ipv4_address(self) -> str:
         return self._ipv4_address
 
     @property
-    def ipv6_address(self):
+    def ipv6_address(self) -> str:
         return self._ipv6_address
+
+
+class IE_CreatePDR(IE):
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.CREATE_PDR
+
+        self._parse_data()
+
+    def _parse_data(self):
+        self._parse_grouped_data()
+        return
+
+    def _print_init(self):
+        print("IE Type: {}, IE Length: {}".format(IEType.CREATE_PDR.name, self._ie_length))
+        return
+
+
+class IE_CreatedPDR(IE):
+
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.CREATED_PDR
+
+        self._parse_data()
+
+    def _parse_data(self):
+        self._parse_grouped_data()
+        return
+
+    def _print_init(self):
+        print("IE Type: {}, IE Length: {}".format(self._ie_type.name, self._ie_length))
+        return
+
+
+class IE_PDRId(IE):
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.PDR_ID
+
+        self._id = None
+        self._parse_data()
+
+    def _parse_data(self):
+        self._id = struct.unpack('! H', self._ie_payload[0: self._ie_length])[0]
+        return
+
+    def _print_init(self):
+        print("\tIE Type: {}, IE Length: {}\n"
+              "\t\t+PDR ID: {}".format(IEType.PDR_ID.name, self._ie_length,
+                                       self._id))
+        return
+
+    @property
+    def id(self) -> int:
+        return self._id
+
+
+class IE_Precedence(IE):
+
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.PRECEDENCE
+
+        self._precedence = None
+        self._parse_data()
+
+    def _parse_data(self):
+        self._precedence = struct.unpack('! L', self._ie_payload[0: self._ie_length])[0]
+        return
+
+    def _print_init(self):
+        print("\tIE Type: {}, IE Length: {}\n"
+              "\t\t+Precedence: {}".format(IEType.PRECEDENCE.name, self._ie_length,
+                                           self._precedence))
+        return
+
+    @property
+    def precedence(self) -> int:
+        return self._precedence
+
+
+class IE_PDI(IE):
+
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.PDI
+
+        self._parse_data()
+
+    def _parse_data(self):
+        self._parse_grouped_data()
+        return
+
+    def _print_init(self):
+        print("\tIE Type: {}, IE Length: {}".format(self._ie_type.name, self._ie_length))
+        return
+
+
+class IE_SourceInterface(IE):
+
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.SOURCE_INTERFACE
+
+        self._spare = None
+        self._source_interface_type = None
+        self._parse_data()
+
+    def _parse_data(self):
+        self._spare = self._ie_payload[0] >> 4
+        self._source_interface_type = SourceInterfaceType(self._ie_payload[0] & 0x0f)
+        return
+
+    def _print_init(self):
+        print("\t\tIE Type: {}, IE Length: {}\n"
+              "\t\t\t+Spare: {}\n"
+              "\t\t\t+Source Interface Type: {}".format(self._ie_type.name, self._ie_length,
+                                                        self._spare,
+                                                        self._source_interface_type.name))
+        return
+
+    @property
+    def source_interface_type(self) -> SourceInterfaceType:
+        return self._source_interface_type
+
+    @property
+    def spare(self) -> int:
+        return self._spare
+
+
+class IE_FTEID(IE):
+
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.F_TEID
+
+        self._spare = None
+        self._choose_id_flag = None
+        self._choose_flag = None
+        self._ipv6_flag = None
+        self._ipv4_flag = None
+        self._choose_id = None
+        self._teid = None
+        self._ipv6_address = None
+        self._ipv4_address = None
+        self._parse_data()
+
+    def _parse_data(self):
+        self._spare = self._ie_payload[0] >> 4
+        self._choose_id_flag = (self._ie_payload[0] >> 3) & 0x1
+        self._choose_flag = (self._ie_payload[0] >> 2) & 0x1
+        self._ipv6_flag = (self._ie_payload[0] >> 1) & 0x1
+        self._ipv4_flag = self._ie_payload[0] & 0x1
+
+        # Only for pfcp session establishment requests
+        if self._choose_id_flag == 1:
+            self._choose_id = self._ie_payload[1]
+
+        if self._choose_flag == 1:
+            return
+
+        # Only for pfcp session establishment responses
+        self._teid = struct.unpack('! L', self._ie_payload[1:5])[0]
+        if self._ipv6_flag == 1:
+            self._ipv6_address = IPv6Address(self._ie_payload[5:21])
+            if self._ipv4_flag == 1:
+                self._ipv4_address = IPv4Address(self._ie_payload[21:25])
+            return
+
+        if self._ipv4_flag == 1:
+            self._ipv4_address = IPv4Address(self._ie_payload[5:9])
+        return
+
+    def _print_init(self):
+        print("\tIE Type: {}, IE Length: {}\n"
+              "\t\t+Spare: {}\n"
+              "\t\t+Choose ID Flag: {}\n"
+              "\t\t+Choose Flag: {}\n"
+              "\t\t+IPv6 Flag: {}\n"
+              "\t\t+IPv4 Flag: {}".format(self._ie_type.name, self._ie_length,
+                                          self._spare,
+                                          self._choose_id_flag,
+                                          self._choose_flag,
+                                          self._ipv6_flag,
+                                          self._ipv4_flag))
+        if self._choose_id is not None:
+            print("\t\t+Choose ID: {}".format(self._choose_id))
+        if self._teid is not None:
+            print("\t\t+TEID: {}".format(self._teid))
+        if self._ipv6_address is not None:
+            print("\t\t+IPv6 Address: {}".format(self._ipv6_address))
+        if self._ipv4_address is not None:
+            print("\t\t+IPv4 Address: {}".format(self._ipv4_address))
+        return
+
+    @property
+    def spare(self) -> int:
+        return self._spare
+
+    @property
+    def choose_id_flag(self) -> int:
+        return self._choose_id_flag
+
+    @property
+    def choose_flag(self) -> int:
+        return self._choose_flag
+
+    @property
+    def ipv6_flag(self) -> int:
+        return self._ipv6_flag
+
+    @property
+    def ipv4_flag(self) -> int:
+        return self._ipv4_flag
+
+    @property
+    def choose_id(self) -> int:
+        return self._choose_id
+
+    @property
+    def teid(self) -> int:
+        return self._teid
+
+    @property
+    def ipv6_address(self) -> str:
+        return self._ipv6_address
+
+    @property
+    def ipv4_address(self) -> str:
+        return self._ipv4_address
 
 
 class PFCP(ApplicationLayer):
 
-    def __init__(self, application_type, application_data, src_port, dest_port):
+    def __init__(self,
+                 application_type: ApplicationType,
+                 application_data: bytes,
+                 src_port: int,
+                 dest_port: int):
         ApplicationLayer.__init__(self, application_type, application_data, src_port, dest_port)
         self._flags = None
         self._flag_version = None
@@ -662,7 +990,6 @@ class PFCP(ApplicationLayer):
         self._message_type = PFCPMessageType(self._message_type)
         self._sequence_number = int.from_bytes(self._sequence_number, 'big')
 
-        #print("@@@", len(greedy_payload))
         if len(greedy_payload) == 0:
             return
         else:
@@ -674,23 +1001,13 @@ class PFCP(ApplicationLayer):
             # First 4 bytes -- IE Type (2 bytes) and IE Length (2 bytes)
             ie_type_int, ie_length = struct.unpack('! H H', greedy_payload[0:4])
             ie_type = IEType(ie_type_int)
-            print("BBB", ie_type.name)
-
-            ie_obj = self._select_ie(ie_type=ie_type, ie_length=ie_length, ie_payload=greedy_payload[4: 4 + ie_length])
+            ie_obj = select_ie(ie_type=ie_type, ie_length=ie_length, ie_payload=greedy_payload[4: 4 + ie_length])
             if ie_obj is not None:
                 self._ie_list.append(ie_obj)
             greedy_payload = greedy_payload[4+ie_length:]
-            print("AHHHH", len(greedy_payload))
+
         return
 
-    # TODO: Account for other IE classes
-    def _select_ie(self, ie_type, ie_length, ie_payload):
-        ie_obj = None
-        if ie_type == IEType.NODE_ID:
-            ie_obj = IE_NodeId(ie_length=ie_length, ie_payload=ie_payload)
-        elif ie_type == IEType.F_SEID:
-            ie_obj = IE_FSEID(ie_length=ie_length, ie_payload=ie_payload)
-        return ie_obj
 
     def print_data(self):
         self._print_pfcp_init()
@@ -725,5 +1042,85 @@ class PFCP(ApplicationLayer):
         return
 
     @property
-    def message_type(self):
+    def flags(self) -> int:
+        return self._flags
+
+    @property
+    def flag_version(self) -> int:
+        return self._flag_version
+
+    @property
+    def flag_spare1(self) -> int:
+        return self._flag_spare1
+
+    @property
+    def flag_spare2(self) -> int:
+        return self._flag_spare2
+
+    @property
+    def flag_follow_on(self) -> int:
+        return self._flag_follow_on
+
+    def flag_message_priority(self) -> int:
+        return self._flag_message_priority
+
+    @property
+    def flag_seid(self) -> int:
+        return self._flag_seid
+
+    @property
+    def message_type(self) -> PFCPMessageType:
         return self._message_type
+
+    @property
+    def length(self) -> int:
+        return self._length
+
+    @property
+    def seid(self) -> int:
+        return self._seid
+
+    @property
+    def sequence_number(self) -> int:
+        return self._sequence_number
+
+    @property
+    def message(self) -> bytes:
+        return self._message
+
+    @property
+    def spare(self) -> int:
+        return self._spare
+
+    @property
+    def ie_list(self) -> list:
+        return self._ie_list
+
+
+# TODO: Account for other IE classes
+def select_ie(ie_type: IEType,
+              ie_length: int,
+              ie_payload: bytes) -> IE:
+
+    if ie_type == IEType.NODE_ID:
+        return IE_NodeId(ie_length, ie_payload)
+    elif ie_type == IEType.F_SEID:
+        return IE_FSEID(ie_length, ie_payload)
+    elif ie_type == IEType.RECOVERY_TIME_STAMP:
+        return IE_RecoveryTimeStamp(ie_length, ie_payload)
+    elif ie_type == IEType.CREATE_PDR:
+        return IE_CreatePDR(ie_length, ie_payload)
+    elif ie_type == IEType.CREATED_PDR:
+        return IE_CreatedPDR(ie_length, ie_payload)
+    elif ie_type == IEType.PDR_ID:
+        return IE_PDRId(ie_length, ie_payload)
+    elif ie_type == IEType.PRECEDENCE:
+        return IE_Precedence(ie_length, ie_payload)
+    elif ie_type == IEType.PDI:
+        return IE_PDI(ie_length, ie_payload)
+    elif ie_type == IEType.SOURCE_INTERFACE:
+        return IE_SourceInterface(ie_length, ie_payload)
+    elif ie_type == IEType.F_TEID:
+        return IE_FTEID(ie_length, ie_payload)
+    else:
+        return None

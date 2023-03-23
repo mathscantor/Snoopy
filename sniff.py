@@ -25,7 +25,7 @@ def main():
         packet = Packet(raw_data=raw_data)
         if packet.application_layer is None:
             continue
-        if packet.application_layer.message_type == PFCPMessageType.SESSION_ESTABLISHMENT_REQUEST:
+        if packet.transport_layer.application_type == ApplicationType.PFCP:
             packet.print_packet()
             print("--------------------------------------------------------------------------------------------")
         del packet
