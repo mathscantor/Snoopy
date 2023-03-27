@@ -1,4 +1,5 @@
 from utils.layer_parsers.transport.transport import TransportLayer
+from utils.layer_parsers.application.application import ApplicationType
 import struct
 from enum import Enum
 
@@ -29,6 +30,16 @@ class SCTP(TransportLayer):
             self._chunk_type, self._chunk_flags,\
             self._chunk_length = struct.unpack('! H H L L B B H', self._transport_data[:16])
         self._chunk_type = SCTPType(self._chunk_type)
+        self._application_data = self._transport_data[self._chunk_length:]
+
+        if len(self._application_data) == 0:
+            return
+
+        self._application_type = ApplicationType(self._src_port)
+        if self._application_type != ApplicationType.UNKNOWN:
+            return
+
+        self._application_type = ApplicationType(self._dest_port)
         return
 
     def print_data(self):
@@ -46,6 +57,8 @@ class SCTP(TransportLayer):
                                            self._chunk_type.name,
                                            self._chunk_flags,
                                            self._chunk_length))
+        if self._application_type is not None and len(self._application_data) > 0:
+            print("\t+Application Type: {}".format(self._application_type.name))
         return
 
     @property
