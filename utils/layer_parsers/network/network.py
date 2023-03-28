@@ -1,9 +1,10 @@
 from enum import Enum
+from utils.layer_parsers.transport.transport import TransportType
 
 
 class NetworkType(Enum):
     IPV4 = 0x0800
-    ARP = 0x0806
+    # ARP = 0x0806  # TODO
     IPV6 = 0x86dd
     UNKNOWN = 0xffff
 
@@ -16,10 +17,6 @@ class NetworkLayer():
 
     def __init__(self, network_type, network_data):
         self._network_type = network_type
-        if self._network_type == NetworkType.UNKNOWN:
-            print("Error in network type! Unable to do parsing in utils/layer_parsers/network.py!")
-            print("Exiting...")
-            exit(1)
 
         # Common fields
         self._network_data = network_data
@@ -37,38 +34,40 @@ class NetworkLayer():
         # To be overwritten by child class
         pass
 
-    def print_raw_transport_data(self):
-        if self._transport_data is not None and len(self._transport_data) > 0:
-            print("raw transport data:")
-            print(self._transport_data)
+    def print_raw_data(self):
+        if self._network_data is not None and len(self._network_data) > 0:
+            print("Network Type: {}".format(self._network_type.name))
+            print("Raw Data ({} bytes):".format(len(self._network_data)))
+            print(self._network_data)
         return
 
+
     @property
-    def network_type(self):
+    def network_type(self) -> NetworkType:
         return self._network_type
 
     @property
-    def network_data(self):
+    def network_data(self) -> bytes:
         return self._network_data
 
     @property
-    def version(self):
+    def version(self) -> int:
         return self._version
 
     @property
-    def transport_type(self):
+    def transport_type(self) -> TransportType:
         return self._transport_type
 
     @property
-    def transport_data(self):
+    def transport_data(self) -> bytes:
         return self._transport_data
 
     @property
-    def src_ip(self):
+    def src_ip(self) -> str:
         return self._src_ip
 
     @property
-    def dest_ip(self):
+    def dest_ip(self) -> str:
         return self._dest_ip
 
 

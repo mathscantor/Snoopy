@@ -49,19 +49,19 @@ class IPv6(NetworkLayer):
         return
 
     @property
-    def traffic_class(self):
+    def traffic_class(self) -> int:
         return self._traffic_class
 
     @property
-    def flow_label(self):
+    def flow_label(self) -> int:
         return self._flow_label
 
     @property
-    def payload_length(self):
+    def payload_length(self) -> int:
         return self._payload_length
 
     @property
-    def hop_limit(self):
+    def hop_limit(self) -> int:
         return self._hop_limit
 
 

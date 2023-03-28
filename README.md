@@ -139,7 +139,46 @@ TCP Data:
 .
 ```
 
-### Example 3: Sniff only unknown protocols 
+### Example 3: Sniff only unknown application protocols 
+```commandline
+$ sudo python3 snoopy.py --application UNKNOWN
+```
+```
+Ethernet Data:
+        +Destination MAC: 00:0C:29:BC:48:AE
+        +Source MAC: 00:50:56:C0:00:08
+        +Network Type: IPV4
+IPV4 Packet:
+        +Version: 4
+        +Header Length: 20
+        +Time To Live: 64
+        -Source IP: 172.16.109.1
+        +Destination IP: 172.16.109.139
+        +Transport Type: TCP
+TCP Data:
+        +Source Port: 44954
+        +Destination Port: 8291
+        +Sequence: 312257948
+        +Acknowledgement: 1619845663
+        +Offset: 32
+        +FLAGS:
+                +URG: 0
+                +ACK: 1
+                +PSH: 1
+                +RST: 0
+                +SYN: 0
+                +FIN: 0
+        +Application Type: ApplicationType.UNKNOWN
+Application Type: UNKNOWN
+Raw Data (79 bytes):
+b'M\x01\x00KM2\x05\x00\xff\x01\x06\x00\xff\t\x01\x07\x00\xff\t\x07\x01\x00\x00!(//./.././.././../flash/rw/store/user.dat\x01\x00\xff\x88\x02\x00\x02\x00\x00\x00\x02\x00\x00\x00'
+```
 
+### Example 4: Saving packets to a pcapng file
+```commandline
+$ sudo python3 snoopy.py --save
+```
+All captured packets will be found under the `capture` folder with the **datetime** as the file name.
+You could use wireshark to open these pcapng files if you wish to do so :).
 
 

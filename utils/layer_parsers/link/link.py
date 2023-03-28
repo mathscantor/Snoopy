@@ -1,4 +1,5 @@
 from enum import Enum
+from utils.layer_parsers.network.network import NetworkType
 
 
 class LinkType(Enum):
@@ -15,10 +16,6 @@ class LinkLayer:
 
     def __init__(self, link_type, link_data):
         self._link_type = link_type
-        if self._link_type == LinkType.UNKNOWN:
-            print("Error in transport type! Unable to do parsing in utils/layer_parsers/transport.py!")
-            print("Exiting...")
-            exit(1)
         self._link_data = link_data
         self._dest_mac = None
         self._src_mac = None
@@ -39,32 +36,33 @@ class LinkLayer:
         # To be overwritten by child class
         pass
 
-    def print_raw_network_data(self):
+    def print_raw_data(self):
         if self._network_data is not None and len(self._network_data) > 0:
-            print("raw network data:")
+            print("Link Type: {}".format(self._link_type.name))
+            print("Raw Data ({} bytes):".format(len(self._network_data)))
             print(self._network_data)
         return
 
     @property
-    def link_type(self):
+    def link_type(self) -> LinkType:
         return self._link_type
 
     @property
-    def link_data(self):
+    def link_data(self) -> bytes:
         return self._link_data
 
     @property
-    def dest_mac(self):
+    def dest_mac(self) -> str:
         return self._dest_mac
 
     @property
-    def src_mac(self):
+    def src_mac(self) -> str:
         return self._src_mac
 
     @property
-    def network_type(self):
+    def network_type(self) -> NetworkType:
         return self._network_type
 
     @property
-    def network_data(self):
+    def network_data(self) -> bytes:
         return self._network_data

@@ -35,19 +35,18 @@ class UDP(TransportLayer):
         print("\t+Source Port: {}\n"
               "\t+Destination Port: {}\n"
               "\t+Length: {}\n"
-              "\t+Checksum: {}".format(self._src_port,
-                                       self._dest_port,
-                                       self._length,
-                                       self._checksum))
-
-        if self._application_type is not None and len(self._application_data) > 0:
-            print("\t+Application Type: {}".format(self._application_type.name))
+              "\t+Checksum: {}\n"
+              "\t+Application Type: {}".format(self._src_port,
+                                               self._dest_port,
+                                               self._length,
+                                               self._checksum,
+                                               self._application_type))
         return
 
     @property
-    def length(self):
+    def length(self) -> int:
         return self._length
 
     @property
-    def checksum(self):
+    def checksum(self) -> int:
         return self._checksum

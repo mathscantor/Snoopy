@@ -1,3 +1,3 @@
 from utils.layer_parsers.network.type.ipv4 import IPv4
 from utils.layer_parsers.network.type.ipv6 import IPv6
-from utils.layer_parsers.network.network import NetworkType
+from utils.layer_parsers.network.network import *

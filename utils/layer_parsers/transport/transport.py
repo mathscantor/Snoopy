@@ -1,4 +1,5 @@
 from enum import Enum
+from utils.layer_parsers.application.application import ApplicationType
 
 
 class TransportType(Enum):
@@ -18,11 +19,6 @@ class TransportLayer:
     def __init__(self, transport_type, transport_data):
 
         self._transport_type = transport_type
-        if self._transport_type == TransportType.UNKNOWN:
-            print("Error in transport type! Unable to do parsing in utils/layer_parsers/transport.py!")
-            print("Exiting...")
-            exit(1)
-
         self._transport_data = transport_data
         self._application_type = None
         self._application_data = None
@@ -38,12 +34,11 @@ class TransportLayer:
         # To be overwritten by child class
         pass
 
-    def print_transport_payload(self):
-        if self._application_data is not None and \
-                len(self._application_data) > 0 and \
-                not self.is_padding(self._application_data):
-            print("Transport Payload ({} bytes):".format(len(self._application_data)))
-            print(self._application_data)
+    def print_raw_data(self):
+        if self._transport_data is not None and len(self._transport_data) > 0:
+            print("Transport Type: {}".format(self._transport_type.name))
+            print("Raw Data ({} bytes):".format(len(self._transport_data)))
+            print(self._transport_data)
         return
 
     def is_padding(self, byte_string):
@@ -53,27 +48,27 @@ class TransportLayer:
         return True
 
     @property
-    def transport_type(self):
+    def transport_type(self) -> TransportType:
         return self._transport_type
 
     @property
-    def transport_data(self):
+    def transport_data(self) -> bytes:
         return self._transport_data
 
     @property
-    def application_type(self):
+    def application_type(self) -> ApplicationType:
         return self._application_type
 
     @property
-    def application_data(self):
+    def application_data(self) -> bytes:
         return self._application_data
 
     @property
-    def src_port(self):
+    def src_port(self) -> int:
         return self._src_port
 
     @property
-    def dest_port(self):
+    def dest_port(self) -> int:
         return self._dest_port
 
 

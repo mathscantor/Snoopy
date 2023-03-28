@@ -43,10 +43,10 @@ class IPv4(NetworkLayer):
                                              self._transport_type.name))
 
     @property
-    def ip_header_length(self):
+    def ip_header_length(self) -> int:
         return self._ip_header_length
 
     @property
-    def time_to_live(self):
+    def time_to_live(self) -> int:
         return self._time_to_live
 

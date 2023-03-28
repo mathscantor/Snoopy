@@ -1,5 +1,6 @@
 from utils.layer_parsers.application.application import ApplicationType
 from utils.layer_parsers.application.application import ApplicationLayer
+from typing import List
 
 
 class HTTP(ApplicationLayer):
@@ -39,6 +40,7 @@ class HTTP(ApplicationLayer):
     def __parse_request_data(self):
         tokens = self._application_data[0:].decode('ISO-8859-1').splitlines()
         tmp = tokens[0].split(' ', 2)  # Eg. GET / HTTP/1.1
+        assert len(tmp) == 3
         self._request_method = tmp[0]
         self._request_uri = tmp[1]
         self._request_version = tmp[2]
@@ -47,12 +49,14 @@ class HTTP(ApplicationLayer):
     def __parse_response_data(self):
         tokens = self._application_data[0:].decode('ISO-8859-1').splitlines()
         tmp = tokens[0].split(' ', 2)  # Eg. HTTP/1.1 204 No Content
+        assert len(tmp) == 3
         self._response_version = tmp[0]
         self._response_status_code = tmp[1]
         self._response_phrase = tmp[2]
         self._response_payload = tokens[3:]
 
     def print_data(self):
+        print("HTTP Data:")
         if self._is_request:
             self.__print_request_data()
         elif self._is_response:
@@ -88,34 +92,30 @@ class HTTP(ApplicationLayer):
                 print("\t+{}".format(self._response_payload[i].strip()))
 
     @property
-    def request_method(self):
+    def request_method(self) -> str:
         return self._request_method
 
     @property
-    def request_uri(self):
+    def request_uri(self) -> str:
         return self._request_uri
 
     @property
-    def request_version(self):
+    def request_version(self) -> str:
         return self._request_version
 
     @property
-    def request_payload(self):
+    def request_payload(self) -> List[str]:
         return self._request_payload
 
-    def response_payload(self):
-        return self._response_payload
-
     @property
-    def response_status_code(self):
+    def response_status_code(self) -> str:
         return self._response_status_code
 
     @property
-    def response_phrase(self):
+    def response_phrase(self) -> str:
         return self._response_phrase
 
-    @property
-    def response_payload(self):
+    def response_payload(self) -> List[str]:
         return self._response_payload
 
 
