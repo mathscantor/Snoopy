@@ -62,7 +62,6 @@ def is_packet_of_interest(packet: Packet) -> bool:
     return False
 
 
-
 def main():
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
     while True:
@@ -93,12 +92,12 @@ if __name__ == '__main__':
                                          formatter_class=argparse.RawTextHelpFormatter)
 
     group = arg_parser.add_mutually_exclusive_group()
-    arg_parser.add_argument('-n', '--network', dest='network_include', metavar="", nargs='+', type=str, required=False,
+    arg_parser.add_argument('--network', dest='network_include', metavar="", nargs='+', type=str, required=False,
                             choices=allowed_network_type_name, help="Supported Formats: {}".format(allowed_network_type_name))
-    group.add_argument('-t', '--transport', dest='transport_include', metavar="", nargs='+', type=str, required=False,
-                            choices=allowed_transport_type_name, help="Supported Formats: {}".format(allowed_transport_type_name))
-    group.add_argument('-a', '--application', dest='application_include', metavar="", nargs='+', type=str, required=False,
-                            choices=allowed_application_type_name, help="Supported Formats: {}".format(allowed_application_type_name))
+    group.add_argument('--transport', dest='transport_include', metavar="", nargs='+', type=str, required=False,
+                       choices=allowed_transport_type_name, help="Supported Formats: {}".format(allowed_transport_type_name))
+    group.add_argument('--application', dest='application_include', metavar="", nargs='+', type=str, required=False,
+                       choices=allowed_application_type_name, help="Supported Formats: {}".format(allowed_application_type_name))
 
     args = arg_parser.parse_args()
 

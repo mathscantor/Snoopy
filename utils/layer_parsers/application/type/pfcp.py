@@ -2,7 +2,6 @@ from utils.layer_parsers.application.application import *
 import struct
 from enum import Enum
 from ipaddress import IPv4Address, IPv6Address
-from scapy.layers.dns import DNS
 from datetime import datetime
 
 
@@ -560,7 +559,7 @@ class IE_NodeId(IE):
         elif self._nodeid_type == NodeIdType.IPV6:
             self._node_ip = IPv6Address(self._ie_payload[1:self._ie_length])
         elif self._nodeid_type == NodeIdType.FQDN:
-            self._node_ip = DNS(self._ie_payload[1:self._ie_length])
+            self._node_ip = self.__convert_raw_bytes_to_fqdn(self._ie_payload[1:self._ie_length])
         return
 
     def _print_init(self):
@@ -570,6 +569,24 @@ class IE_NodeId(IE):
                                       self._spare, self._nodeid_type.name,
                                       self._node_ip))
         return
+
+    def __convert_raw_bytes_to_fqdn(self, raw_bytes) -> str:
+
+        # Split the raw bytes into labels
+        labels = []
+        i = 0
+        while i < len(raw_bytes):
+            label_len = raw_bytes[i]
+            if label_len == 0:
+                break
+            label = raw_bytes[i + 1:i + 1 + label_len].decode('utf-8')
+            labels.append(label)
+            i += 1 + label_len
+
+        # Join the labels to form the domain name
+        domain_name = '.'.join(labels)
+
+        return domain_name
 
     @property
     def spare(self) -> int:
