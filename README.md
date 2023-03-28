@@ -1,5 +1,7 @@
 # Snoopy - Packet Sniffing Tool
-
+<p align="center" style="margin-bottom: 0px !important;">
+  <img src="images/snoopy.png" width="40%" height="40%" alt="snoopy icon" align="center">
+</p>
 ## Dependencies
 - Python 3
 - That's it lol. There's no need to install additional libraries.
