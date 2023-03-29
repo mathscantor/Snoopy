@@ -1610,6 +1610,33 @@ class PFCP(ApplicationLayer):
         return self._ie_list
 
 
+class IE_Cause(IE):
+    def __init__(self,
+                 ie_length: int,
+                 ie_payload: bytes):
+        IE.__init__(self, ie_length, ie_payload)
+        self._ie_type = IEType.CAUSE
+
+        assert ie_length == 1
+        self._cause_type = None
+        self._parse_data()
+
+    def _parse_data(self):
+        cause_int = struct.unpack('! B', self._ie_payload[0:self._ie_length])[0]
+        self._cause_type = CauseValuesType(cause_int)
+        return
+
+    def _print_init(self):
+        print("IE Type: {}, IE Length: {}\n"
+              "\t+Cause: {}".format(self._ie_type.name, self._ie_length,
+                                    self._cause_type.name))
+        return
+
+    @property
+    def cause_type(self) -> CauseValuesType:
+        return self._cause_type
+
+
 # TODO: Account for other IE classes
 def select_ie(ie_type: IEType,
               ie_length: int,
@@ -1619,6 +1646,8 @@ def select_ie(ie_type: IEType,
         return IE_NodeId(ie_length, ie_payload)
     elif ie_type == IEType.F_SEID:
         return IE_FSEID(ie_length, ie_payload)
+    elif ie_type == IEType.CAUSE:
+        return IE_Cause(ie_length, ie_payload)
     elif ie_type == IEType.RECOVERY_TIME_STAMP:
         return IE_RecoveryTimeStamp(ie_length, ie_payload)
     elif ie_type == IEType.CREATE_PDR:
