@@ -555,9 +555,9 @@ class IE_NodeId(IE):
         self._nodeid_type = NodeIdType(self._ie_payload[0] & 0x0f)
 
         if self._nodeid_type == NodeIdType.IPV4:
-            self._node_ip = IPv4Address(self._ie_payload[1:self._ie_length])
+            self._node_ip = str(IPv4Address(self._ie_payload[1:self._ie_length]))
         elif self._nodeid_type == NodeIdType.IPV6:
-            self._node_ip = IPv6Address(self._ie_payload[1:self._ie_length])
+            self._node_ip = str(IPv6Address(self._ie_payload[1:self._ie_length]))
         elif self._nodeid_type == NodeIdType.FQDN:
             self._node_ip = self.__convert_raw_bytes_to_fqdn(self._ie_payload[1:self._ie_length])
         return
@@ -634,10 +634,10 @@ class IE_FSEID(IE):
         limit = 9
         self._seid = int.from_bytes(self._ie_payload[1:limit], 'big')
         if self._ipv4_flag == 1:
-            self._ipv4_address = IPv4Address(self._ie_payload[limit: limit+4])
+            self._ipv4_address = str(IPv4Address(self._ie_payload[limit: limit+4]))
             limit += 4
         if self._ipv6_flag == 1:
-            self._ipv6_address = IPv6Address(self._ie_payload[limit: limit+16])
+            self._ipv6_address = str(IPv6Address(self._ie_payload[limit: limit+16]))
 
         return
 
@@ -1051,13 +1051,13 @@ class IE_FTEID(IE):
         # Only for pfcp session establishment responses
         self._teid = struct.unpack('! L', self._ie_payload[1:5])[0]
         if self._ipv6_present_flag == 1:
-            self._ipv6_address = IPv6Address(self._ie_payload[5:21])
+            self._ipv6_address = str(IPv6Address(self._ie_payload[5:21]))
             if self._ipv4_present_flag == 1:
-                self._ipv4_address = IPv4Address(self._ie_payload[21:25])
+                self._ipv4_address = str(IPv4Address(self._ie_payload[21:25]))
             return
 
         if self._ipv4_present_flag == 1:
-            self._ipv4_address = IPv4Address(self._ie_payload[5:9])
+            self._ipv4_address = str(IPv4Address(self._ie_payload[5:9]))
         return
 
     def _print_init(self):
@@ -1150,13 +1150,13 @@ class IE_UE_IP_Address(IE):
         self._ipv6_present_flag = self._ie_payload[0] & 0x1
 
         if self._ipv4_present_flag == 1:
-            self._ipv4_address = IPv4Address(self._ie_payload[1:5])
+            self._ipv4_address = str(IPv4Address(self._ie_payload[1:5]))
             if self._ipv6_present_flag == 1:
-                self._ipv6_address = IPv6Address(self._ie_payload[5:21])
+                self._ipv6_address = str(IPv6Address(self._ie_payload[5:21]))
                 return
 
         if self._ipv6_present_flag == 1:
-            self._ipv6_address = IPv6Address(self._ie_payload[1:17])
+            self._ipv6_address = str(IPv6Address(self._ie_payload[1:17]))
         return
 
     def _print_init(self):
