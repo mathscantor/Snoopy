@@ -10,7 +10,6 @@ from utils.layer_parsers.application import *
 
 
 def is_duplicate_packet(raw_data: bytes) -> bool:
-
     is_duplicate = False
     if raw_data in packets_set:
         is_duplicate = True
@@ -22,7 +21,6 @@ def is_duplicate_packet(raw_data: bytes) -> bool:
 
 
 def is_packet_of_interest(packet: Packet) -> bool:
-
     # No Filters specified, then return True
     if not has_network_filter and not has_transport_filter and not has_application_filter:
         return True
@@ -56,6 +54,18 @@ def is_packet_of_interest(packet: Packet) -> bool:
                 and packet.application_layer.application_type.name in args.application_include:
             return True
 
+    elif has_network_filter and has_transport_filter and has_application_filter:
+        if packet.network_layer is None or packet.network_layer.network_type is None:
+            return False
+        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+            return False
+        if packet.application_layer is None or packet.application_layer.application_type is None:
+            return False
+        if packet.network_layer.network_type.name in args.network_include \
+                and packet.transport_layer.transport_type.name in args.transport_include \
+                and packet.application_layer.application_type.name in args.application_include:
+            return True
+
     # --transport ...
     elif not has_network_filter and has_transport_filter and not has_application_filter:
         if packet.transport_layer is None or packet.transport_layer.transport_type is None:
@@ -72,11 +82,20 @@ def is_packet_of_interest(packet: Packet) -> bool:
         if packet.application_layer.application_type.name in args.application_include:
             return True
 
+    # --transport ... --application ...
+    elif not has_network_filter and has_transport_filter and has_application_filter:
+        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+            return False
+        if packet.application_layer is None or packet.application_layer.application_type is None:
+            return False
+        if packet.transport_layer.transport_type.name in args.transport_include \
+                and packet.application_layer.application_type.name in args.application_include:
+            return True
+
     return False
 
 
 def handle_tcp_reassembly(packet: Packet) -> Packet:
-
     if packet.network_layer is None or packet.transport_layer is None:
         return
     if packet.transport_layer.transport_type is None:
@@ -93,9 +112,11 @@ def handle_tcp_reassembly(packet: Packet) -> Packet:
         tcp_segments[(packet.network_layer.src_ip,
                       packet.network_layer.dest_ip,
                       packet.transport_layer.src_port,
-                      packet.transport_layer.dest_port)][packet.transport_layer.sequence] = packet.application_layer.application_data
+                      packet.transport_layer.dest_port)][
+            packet.transport_layer.sequence] = packet.application_layer.application_data
 
     return
+
 
 def main():
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
@@ -128,15 +149,19 @@ if __name__ == '__main__':
                                          epilog="Developed by Gerald Lim Wee Koon (github: mathscantor)",
                                          formatter_class=argparse.RawTextHelpFormatter)
 
-    group = arg_parser.add_mutually_exclusive_group()
+    # group = arg_parser.add_mutually_exclusive_group()
     arg_parser.add_argument('--save', dest='save', required=False, action='store_true',
                             help="Specify this argument to save sniffed packets into a pcapng file.")
     arg_parser.add_argument('--network', dest='network_include', metavar="", nargs='+', type=str, required=False,
-                            choices=allowed_network_type_name, help="Supported Formats: {}".format(allowed_network_type_name))
-    group.add_argument('--transport', dest='transport_include', metavar="", nargs='+', type=str, required=False,
-                       choices=allowed_transport_type_name, help="Supported Formats: {}".format(allowed_transport_type_name))
-    group.add_argument('--application', dest='application_include', metavar="", nargs='+', type=str, required=False,
-                       choices=allowed_application_type_name, help="Supported Formats: {}".format(allowed_application_type_name))
+                            choices=allowed_network_type_name,
+                            help="Supported Formats: {}".format(allowed_network_type_name))
+    arg_parser.add_argument('--transport', dest='transport_include', metavar="", nargs='+', type=str, required=False,
+                            choices=allowed_transport_type_name,
+                            help="Supported Formats: {}".format(allowed_transport_type_name))
+    arg_parser.add_argument('--application', dest='application_include', metavar="", nargs='+', type=str,
+                            required=False,
+                            choices=allowed_application_type_name,
+                            help="Supported Formats: {}".format(allowed_application_type_name))
 
     arg_parser.set_defaults(save=False)
     args = arg_parser.parse_args()
@@ -153,6 +178,5 @@ if __name__ == '__main__':
         has_application_filter = True
 
     pcapng_saver = PcapngSaver()
-    tcp_segments = {} # To handle TCP reassembly
+    tcp_segments = {}  # To handle TCP reassembly
     main()
-

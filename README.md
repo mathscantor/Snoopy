@@ -44,18 +44,19 @@
 ## Usage
 Please ensure to run `snoopy.py` as root / admin privileges.
 
-Note that the `--network` and `--application` filters are mutually exclusive.
 ```commandline
-usage: sudo python3 snoopy.py [-h] [--save] [--network  [...]] [--transport  [...] | --application  [...]]
+usage: sudo python3 snoopy.py [-h] [--save] [--network  [...]] [--transport  [...]] [--application  [...]]
 
 A packet sniffer in the works.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --save                Specify this argument to save sniffed packets into a pcapng file.
-  --network  [ ...]     Supported Formats: ['IPV4', 'ARP', 'IPV6', 'UNKNOWN']
+  --network  [ ...]     Supported Formats: ['IPV4', 'IPV6', 'UNKNOWN']
   --transport  [ ...]   Supported Formats: ['ICMP', 'TCP', 'UDP', 'SCTP', 'UNKNOWN']
-  --application  [ ...] Supported Formats: ['HTTP', 'HTTPS', 'PFCP', 'UNKNOWN']
+  --application  [ ...]
+                        Supported Formats: ['HTTP', 'PFCP', 'UNKNOWN']
+
 ```
 
 ### Example 1: Sniff only IPV4 and UDP
