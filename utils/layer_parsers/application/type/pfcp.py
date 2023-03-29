@@ -1209,6 +1209,14 @@ class IE_UE_IP_Address(IE):
         return self._sd_flag
 
     @property
+    def ipv4_present_flag(self):
+        return self._ipv4_present_flag
+
+    @property
+    def ipv6_present_flag(self):
+        return self._ipv6_present_flag
+
+    @property
     def ipv4_address(self) -> int:
         return self._ipv4_address
 
