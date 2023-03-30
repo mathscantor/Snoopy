@@ -94,7 +94,7 @@ class Packet:
                         src_port=self.__transport_layer.src_port,
                         dest_port=self.__transport_layer.dest_port)
 
-    def print_packet(self):
+    def print_packet_verbose(self):
         if self.__link_layer is None:
             return
         if self.__link_layer.link_type == LinkType.UNKNOWN:
@@ -122,6 +122,45 @@ class Packet:
             self.__application_layer.print_raw_data()
             return
         self.__application_layer.print_data()
+        return
+
+    def print_packet_minimal(self):
+        packet_info = "Raw({} bytes)".format(len(self.__raw_data))
+        if self.__link_layer is None:
+            print(packet_info)
+            return
+        packet_info = "{}(Src MAC: {}, Dst MAC: {})".format(self.__link_layer.link_type.name,
+                                                            self.__link_layer.src_mac,
+                                                            self.__link_layer.dest_mac)
+        if self.__network_layer is None:
+            return
+        if self.__network_layer.network_type == NetworkType.UNKNOWN and len(self.__network_layer.network_data) > 0:
+            packet_info += " / Raw({} bytes)".format(len(self.__network_layer.network_data))
+            print(packet_info)
+            return
+        packet_info += " / {}(Src IP: {}, Dst IP: {})".format(self.__network_layer.network_type.name,
+                                                              self.__network_layer.src_ip,
+                                                              self.__network_layer.dest_ip)
+
+        if self.__transport_layer is None:
+            return
+        if self.__transport_layer.transport_type == TransportType.UNKNOWN and len(self.__transport_layer.transport_data) > 0:
+            packet_info += " / Raw({} bytes)".format(len(self.__network_layer.transport_data))
+            print(packet_info)
+            return
+        packet_info += " / {}(Src Port: {}, Dst Port: {})".format(self.__transport_layer.transport_type.name,
+                                                                  self.__transport_layer.src_port,
+                                                                  self.__transport_layer.dest_port)
+
+        if self.__application_layer is None:
+            return
+        if self.__application_layer.application_type == ApplicationType.UNKNOWN and len(self.__application_layer.application_data) > 0:
+            packet_info += " / Raw({} bytes)".format(len(self.__application_layer.application_data))
+            print(packet_info)
+            return
+        packet_info += " / {}({} bytes)".format(self.__application_layer.application_type.name,
+                                                len(self.__application_layer.application_data))
+        print(packet_info)
         return
 
     @property

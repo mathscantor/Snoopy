@@ -128,8 +128,12 @@ def main():
 
         packet = Packet(raw_data=raw_data)
         if is_packet_of_interest(packet):
-            packet.print_packet()
-            print("--------------------------------------------------------------------------------------------")
+            if args.verbose:
+                packet.print_packet_verbose()
+                print("--------------------------------------------------------------------------------------------")
+            else:
+                packet.print_packet_minimal()
+
             if args.save:
                 pcapng_saver.save_packet(packet)
 
@@ -141,6 +145,7 @@ def main():
 if __name__ == '__main__':
     packets_set = set()
 
+    allowed_verbosity = [1, 2]
     allowed_network_type_name = list(i.name for i in NetworkType)
     allowed_transport_type_name = list(i.name for i in TransportType)
     allowed_application_type_name = list(i.name for i in ApplicationType)
@@ -151,6 +156,8 @@ if __name__ == '__main__':
 
     # group = arg_parser.add_mutually_exclusive_group()
     arg_parser.add_argument('--save', dest='save', required=False, action='store_true',
+                            help="Specify this argument to save sniffed packets into a pcapng file.")
+    arg_parser.add_argument('--verbose', dest='verbose', required=False, action='store_true',
                             help="Specify this argument to save sniffed packets into a pcapng file.")
     arg_parser.add_argument('--network', dest='network_include', metavar="", nargs='+', type=str, required=False,
                             choices=allowed_network_type_name,
@@ -163,7 +170,8 @@ if __name__ == '__main__':
                             choices=allowed_application_type_name,
                             help="Supported Formats: {}".format(allowed_application_type_name))
 
-    arg_parser.set_defaults(save=False)
+    arg_parser.set_defaults(save=False,
+                            verbose=False)
     args = arg_parser.parse_args()
 
     has_network_filter = False
