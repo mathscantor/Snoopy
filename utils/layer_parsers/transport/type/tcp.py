@@ -71,7 +71,7 @@ class TCP(TransportLayer):
                                                self._flag_rst,
                                                self._flag_syn,
                                                self._flag_fin,
-                                               self._application_type))
+                                               self._application_type.name))
         return
 
     @property

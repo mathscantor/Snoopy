@@ -80,7 +80,7 @@ class ICMP(TransportLayer):
               "\t+Application Type: {}".format(self._type.name,
                                                self._code,
                                                self._checksum,
-                                               self._application_type))
+                                               self._application_type.name))
         return
 
     @property

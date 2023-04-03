@@ -40,7 +40,7 @@ class UDP(TransportLayer):
                                                self._dest_port,
                                                self._length,
                                                self._checksum,
-                                               self._application_type))
+                                               self._application_type.name))
         return
 
     @property

@@ -73,7 +73,7 @@ class SCTP(TransportLayer):
                                                self._chunk_type.name,
                                                self._chunk_flags,
                                                self._chunk_length,
-                                               self._application_type))
+                                               self._application_type.name))
         return
 
     @property
