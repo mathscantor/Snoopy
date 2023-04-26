@@ -12,10 +12,24 @@ class LinkType(Enum):
         return cls.UNKNOWN
 
 
+class VLANType(Enum):
+
+    DOT1Q = 0x8100
+    UNKNOWN = 0xff
+
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
+
 class LinkLayer:
 
     def __init__(self, link_type, link_data):
         self._link_type = link_type
+        self._vlan_type = None
+        self._vlan_priority = None
+        self._vlan_dei = None
+        self._vlan_id = None
+
         self._link_data = link_data
         self._dest_mac = None
         self._src_mac = None
@@ -46,6 +60,22 @@ class LinkLayer:
     @property
     def link_type(self) -> LinkType:
         return self._link_type
+
+    @property
+    def vlan_type(self) -> LinkType:
+        return self._vlan_type
+
+    @property
+    def vlan_priority(self) -> int:
+        return self._vlan_priority
+
+    @property
+    def vlan_dei(self) -> int:
+        return self._vlan_dei
+
+    @property
+    def vlan_id(self) -> int:
+        return self._vlan_id
 
     @property
     def link_data(self) -> bytes:

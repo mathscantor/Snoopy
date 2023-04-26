@@ -132,6 +132,11 @@ class Packet:
         packet_info = "{}(Src MAC: {}, Dst MAC: {})".format(self.__link_layer.link_type.name,
                                                             self.__link_layer.src_mac,
                                                             self.__link_layer.dest_mac)
+        if self.__link_layer.vlan_type is not None:
+            packet_info += " / {}(Priority: {}, DEI: {}, ID: {})".format(self.__link_layer.vlan_type.name,
+                                                                         self.__link_layer.vlan_priority,
+                                                                         self.__link_layer.vlan_dei,
+                                                                         self.__link_layer.vlan_id)
         if self.__network_layer is None:
             return
         if self.__network_layer.network_type == NetworkType.UNKNOWN and len(self.__network_layer.network_data) > 0:
