@@ -21,107 +21,88 @@ def is_duplicate_packet(raw_data: bytes) -> bool:
     return is_duplicate
 
 
-def is_packet_of_interest(packet: Packet) -> bool:
+def is_packet_of_interest(snoopy_packet: SnoopyPacket) -> bool:
     # No Filters specified, then return True
     if not has_network_filter and not has_transport_filter and not has_application_filter:
         return True
 
     # --network ...
     elif has_network_filter and not has_transport_filter and not has_application_filter:
-        if packet.network_layer is None or packet.network_layer.network_type is None:
+        if snoopy_packet.network_layer is None or snoopy_packet.network_layer.network_type is None:
             return False
-        if packet.network_layer.network_type.name in args.network_include:
+        if snoopy_packet.network_layer.network_type.name in args.network_include:
             return True
 
     # --network ... --transport ...
     elif has_network_filter and has_transport_filter and not has_application_filter:
-        if packet.network_layer is None or packet.network_layer.network_type is None:
+        if snoopy_packet.network_layer is None or snoopy_packet.network_layer.network_type is None:
             return False
-        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+        if snoopy_packet.transport_layer is None or snoopy_packet.transport_layer.transport_type is None:
             return False
-        if packet.network_layer.network_type.name in args.network_include \
-                and packet.transport_layer.transport_type.name in args.transport_include:
+        if snoopy_packet.network_layer.network_type.name in args.network_include \
+                and snoopy_packet.transport_layer.transport_type.name in args.transport_include:
             return True
 
     # --network ... --application ...
     elif has_network_filter and not has_transport_filter and has_application_filter:
-        if packet.network_layer is None or packet.network_layer.network_type is None:
+        if snoopy_packet.network_layer is None or snoopy_packet.network_layer.network_type is None:
             return False
-        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+        if snoopy_packet.transport_layer is None or snoopy_packet.transport_layer.transport_type is None:
             return False
-        if packet.application_layer is None or packet.application_layer.application_type is None:
+        if snoopy_packet.application_layer is None or snoopy_packet.application_layer.application_type is None:
             return False
-        if packet.network_layer.network_type.name in args.network_include \
-                and packet.application_layer.application_type.name in args.application_include:
+        if snoopy_packet.network_layer.network_type.name in args.network_include \
+                and snoopy_packet.application_layer.application_type.name in args.application_include:
             return True
 
     elif has_network_filter and has_transport_filter and has_application_filter:
-        if packet.network_layer is None or packet.network_layer.network_type is None:
+        if snoopy_packet.network_layer is None or snoopy_packet.network_layer.network_type is None:
             return False
-        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+        if snoopy_packet.transport_layer is None or snoopy_packet.transport_layer.transport_type is None:
             return False
-        if packet.application_layer is None or packet.application_layer.application_type is None:
+        if snoopy_packet.application_layer is None or snoopy_packet.application_layer.application_type is None:
             return False
-        if packet.network_layer.network_type.name in args.network_include \
-                and packet.transport_layer.transport_type.name in args.transport_include \
-                and packet.application_layer.application_type.name in args.application_include:
+        if snoopy_packet.network_layer.network_type.name in args.network_include \
+                and snoopy_packet.transport_layer.transport_type.name in args.transport_include \
+                and snoopy_packet.application_layer.application_type.name in args.application_include:
             return True
 
     # --transport ...
     elif not has_network_filter and has_transport_filter and not has_application_filter:
-        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+        if snoopy_packet.transport_layer is None or snoopy_packet.transport_layer.transport_type is None:
             return False
-        if packet.transport_layer.transport_type.name in args.transport_include:
+        if snoopy_packet.transport_layer.transport_type.name in args.transport_include:
             return True
 
     # --application ...
     elif not has_network_filter and not has_transport_filter and has_application_filter:
-        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+        if snoopy_packet.transport_layer is None or snoopy_packet.transport_layer.transport_type is None:
             return False
-        if packet.application_layer is None or packet.application_layer.application_type is None:
+        if snoopy_packet.application_layer is None or snoopy_packet.application_layer.application_type is None:
             return False
-        if packet.application_layer.application_type.name in args.application_include:
+        if snoopy_packet.application_layer.application_type.name in args.application_include:
             return True
 
     # --transport ... --application ...
     elif not has_network_filter and has_transport_filter and has_application_filter:
-        if packet.transport_layer is None or packet.transport_layer.transport_type is None:
+        if snoopy_packet.transport_layer is None or snoopy_packet.transport_layer.transport_type is None:
             return False
-        if packet.application_layer is None or packet.application_layer.application_type is None:
+        if snoopy_packet.application_layer is None or snoopy_packet.application_layer.application_type is None:
             return False
-        if packet.transport_layer.transport_type.name in args.transport_include \
-                and packet.application_layer.application_type.name in args.application_include:
+        if snoopy_packet.transport_layer.transport_type.name in args.transport_include \
+                and snoopy_packet.application_layer.application_type.name in args.application_include:
             return True
 
     return False
 
 
-def handle_tcp_reassembly(packet: Packet) -> Packet:
-    if packet.network_layer is None or packet.transport_layer is None:
-        return
-    if packet.transport_layer.transport_type is None:
-        return
-
-    if packet.transport_layer.transport_type != TransportType.TCP:
-        return
-    if packet.transport_layer.flag_syn == 1:
-        tcp_segments[(packet.network_layer.src_ip,
-                      packet.network_layer.dest_ip,
-                      packet.transport_layer.src_port,
-                      packet.transport_layer.dest_port)] = {}
-    if len(packet.application_layer.application_data) > 0:
-        tcp_segments[(packet.network_layer.src_ip,
-                      packet.network_layer.dest_ip,
-                      packet.transport_layer.src_port,
-                      packet.transport_layer.dest_port)][
-            packet.transport_layer.sequence] = packet.application_layer.application_data
-
-    return
-
-
 def handler(packet):
     raw_data = bytes(packet)
+    if is_duplicate_packet(raw_data):
+        return
+    packets_set.add(raw_data)
     snoopy_packet = SnoopyPacket(raw_data=raw_data)
+
     if is_packet_of_interest(snoopy_packet):
         if args.verbose:
             snoopy_packet.print_packet_verbose()
@@ -134,10 +115,15 @@ def handler(packet):
 
     del snoopy_packet
     gc.collect()
+    return
 
 
 def main():
-    sniff(prn=handler, store=0, iface=list(interface for index, interface in socket.if_nameindex()))
+    interface_list = list(interface for index, interface in socket.if_nameindex())
+    conf.bufsize = 6553600
+    s = conf.L2listen(type=ETH_P_ALL,
+                      filter="ip")
+    sniff(opened_socket=s, prn=handler, store=0, iface=interface_list)
 
 
 if __name__ == '__main__':

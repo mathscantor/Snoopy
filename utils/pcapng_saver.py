@@ -13,7 +13,7 @@ SHB_HEADER_OPTIONS = {"shb_hardware": "artificial", "shb_os": "python", "shb_use
 class PcapngSaver:
 
     def __init__(self):
-        self.__file_path = "capture/capture_{}.pcapng".format(datetime.now().strftime('%d-%m-%Y_%H:%M:%S'))
+        self.__file_path = "capture/capture_{}.pcapng".format(datetime.now().strftime('%d-%m-%Y_%H-%M-%S'))
         os.makedirs(os.path.dirname(self.__file_path), exist_ok=True)
 
         self.__shb = blocks.SectionHeader(options=SHB_HEADER_OPTIONS)
