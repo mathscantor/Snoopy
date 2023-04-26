@@ -65,15 +65,15 @@ class SCTP(TransportLayer):
               "\t+Checksum: {}\n"
               "\t+Chunk Type: {}\n"
               "\t+Chunk Flags: {}\n"
-              "\t+Chunk Length: {}\n"
-              "\t+Application Type: {}".format(self._src_port,
-                                               self._dest_port,
-                                               self._verification_tag,
-                                               self._checksum,
-                                               self._chunk_type.name,
-                                               self._chunk_flags,
-                                               self._chunk_length,
-                                               self._application_type.name))
+              "\t+Chunk Length: {}".format(self._src_port,
+                                           self._dest_port,
+                                           self._verification_tag,
+                                           self._checksum,
+                                           self._chunk_type.name,
+                                           self._chunk_flags,
+                                           self._chunk_length))
+        if self._application_type is not None:
+            print("\t+Application Type: {}".format(self._application_type.name))
         return
 
     @property

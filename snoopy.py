@@ -1,5 +1,5 @@
 import socket
-from utils.packet import Packet
+from utils.snoopy_packet import SnoopyPacket
 import gc
 import argparse
 from utils.pcapng_saver import PcapngSaver
@@ -7,6 +7,7 @@ from utils.layer_parsers.link import *
 from utils.layer_parsers.network import *
 from utils.layer_parsers.transport import *
 from utils.layer_parsers.application import *
+from scapy.all import *
 
 
 def is_duplicate_packet(raw_data: bytes) -> bool:
@@ -118,28 +119,25 @@ def handle_tcp_reassembly(packet: Packet) -> Packet:
     return
 
 
+def handler(packet):
+    raw_data = bytes(packet)
+    snoopy_packet = SnoopyPacket(raw_data=raw_data)
+    if is_packet_of_interest(snoopy_packet):
+        if args.verbose:
+            snoopy_packet.print_packet_verbose()
+            print("--------------------------------------------------------------------------------------------")
+        else:
+            snoopy_packet.print_packet_minimal()
+
+        if args.save:
+            pcapng_saver.save_packet(snoopy_packet)
+
+    del snoopy_packet
+    gc.collect()
+
+
 def main():
-    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
-    while True:
-        raw_data, addr = s.recvfrom(65565)
-        if is_duplicate_packet(raw_data):
-            continue
-        packets_set.add(raw_data)
-
-        packet = Packet(raw_data=raw_data)
-        if is_packet_of_interest(packet):
-            if args.verbose:
-                packet.print_packet_verbose()
-                print("--------------------------------------------------------------------------------------------")
-            else:
-                packet.print_packet_minimal()
-
-            if args.save:
-                pcapng_saver.save_packet(packet)
-
-        del packet
-        gc.collect()
-    return
+    sniff(prn=handler, store=0, iface=list(interface for index, interface in socket.if_nameindex()))
 
 
 if __name__ == '__main__':

@@ -44,7 +44,7 @@ class HTTP(ApplicationLayer):
         self._request_method = tmp[0]
         self._request_uri = tmp[1]
         self._request_version = tmp[2]
-        self._request_payload = tokens[3:]
+        self._request_payload = tokens[1:]
 
     def __parse_response_data(self):
         tokens = self._application_data[0:].decode('ISO-8859-1').splitlines()
@@ -53,7 +53,7 @@ class HTTP(ApplicationLayer):
         self._response_version = tmp[0]
         self._response_status_code = tmp[1]
         self._response_phrase = tmp[2]
-        self._response_payload = tokens[3:]
+        self._response_payload = tokens[1:]
 
     def print_data(self):
         print("HTTP Data:")

@@ -4,7 +4,7 @@ from utils.layer_parsers.transport import *
 from utils.layer_parsers.application import *
 
 
-class Packet:
+class SnoopyPacket:
 
     def __init__(self, raw_data):
 
@@ -31,6 +31,7 @@ class Packet:
 
         # ------------------ APPLICATION LAYER ------------------ #
         self.__application_layer = self.__return_application_layer()
+
         return
 
     def __return_link_layer(self):
@@ -41,6 +42,7 @@ class Packet:
         elif link_type == LinkType.ETHER:
             return Ether(link_type=link_type,
                          link_data=self.__raw_data)
+        return None
 
     def __return_network_layer(self):
         if self.__link_layer.network_type == NetworkType.UNKNOWN:
@@ -52,6 +54,7 @@ class Packet:
         elif self.__link_layer.network_type == NetworkType.IPV6:
             return IPv6(network_type=self.__link_layer.network_type,
                         network_data=self.__link_layer.network_data)
+        return None
 
     def __return_transport_layer(self):
         if self.__network_layer.transport_type == TransportType.UNKNOWN:
@@ -69,6 +72,7 @@ class Packet:
         elif self.__network_layer.transport_type == TransportType.UDP:
             return UDP(transport_type=self.__network_layer.transport_type,
                        transport_data=self.__network_layer.transport_data)
+        return None
 
     def __return_application_layer(self):
 
@@ -93,6 +97,7 @@ class Packet:
                         application_data=self.__transport_layer.application_data,
                         src_port=self.__transport_layer.src_port,
                         dest_port=self.__transport_layer.dest_port)
+        return None
 
     def print_packet_verbose(self):
         if self.__link_layer is None:

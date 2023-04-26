@@ -40,10 +40,9 @@ class TCP(TransportLayer):
             return
 
         self._application_type = ApplicationType(self._src_port)
-        if self._application_type != ApplicationType.UNKNOWN:
-            return
+        if self._application_type == ApplicationType.UNKNOWN:
+            self._application_type = ApplicationType(self._dest_port)
 
-        self._application_type = ApplicationType(self._dest_port)
         return
 
     def print_data(self):
@@ -59,19 +58,19 @@ class TCP(TransportLayer):
               "\t\t+PSH: {}\n"
               "\t\t+RST: {}\n"
               "\t\t+SYN: {}\n"
-              "\t\t+FIN: {}\n"
-              "\t+Application Type: {}".format(self._src_port,
-                                               self._dest_port,
-                                               self._sequence,
-                                               self._acknowledgement,
-                                               self._header_length,
-                                               self._flag_urg,
-                                               self._flag_ack,
-                                               self._flag_psh,
-                                               self._flag_rst,
-                                               self._flag_syn,
-                                               self._flag_fin,
-                                               self._application_type.name))
+              "\t\t+FIN: {}".format(self._src_port,
+                                    self._dest_port,
+                                    self._sequence,
+                                    self._acknowledgement,
+                                    self._header_length,
+                                    self._flag_urg,
+                                    self._flag_ack,
+                                    self._flag_psh,
+                                    self._flag_rst,
+                                    self._flag_syn,
+                                    self._flag_fin))
+        if self._application_type is not None:
+            print("\t+Application Type: {}".format(self._application_type.name))
         return
 
     @property

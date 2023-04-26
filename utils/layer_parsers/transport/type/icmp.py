@@ -76,11 +76,11 @@ class ICMP(TransportLayer):
         print("ICMP Data:")
         print("\t+Type: {}\n"
               "\t+Code: {}\n"
-              "\t+Checksum: {}\n"
-              "\t+Application Type: {}".format(self._type.name,
-                                               self._code,
-                                               self._checksum,
-                                               self._application_type.name))
+              "\t+Checksum: {}".format(self._type.name,
+                                       self._code,
+                                       self._checksum))
+        if self._application_type is not None:
+            print("\t+Application Type: {}".format(self._application_type.name))
         return
 
     @property

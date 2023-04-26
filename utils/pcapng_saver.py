@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from utils.pcapng.writer import FileWriter
 import utils.pcapng.blocks as blocks
-from utils.packet import Packet
+from utils.snoopy_packet import SnoopyPacket
 
 
 # Global Options
@@ -19,7 +19,7 @@ class PcapngSaver:
         self.__shb = blocks.SectionHeader(options=SHB_HEADER_OPTIONS)
         self.__shb.new_member(blocks.InterfaceDescription, link_type=1, options=SHB_INTERFACE_OPTIONS)
 
-    def save_packet(self, packet: Packet):
+    def save_packet(self, packet: SnoopyPacket):
         with open(self.__file_path, 'ab') as file_obj:
             writer = FileWriter(file_obj, self.__shb)
             spb = self.__shb.new_member(blocks.SimplePacket)
