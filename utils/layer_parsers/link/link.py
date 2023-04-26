@@ -62,7 +62,7 @@ class LinkLayer:
         return self._link_type
 
     @property
-    def vlan_type(self) -> LinkType:
+    def vlan_type(self) -> VLANType:
         return self._vlan_type
 
     @property
