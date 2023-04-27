@@ -1312,12 +1312,13 @@ class IE_ApplyAction(IE):
         self._forw = None   # Forward
         self._drop = None   # Drop
         # 2nd byte
-        self._spare = None  # Spare
-        self._mbsu = None   # Forward and replicate MBS data using Unicast transport
-        self._fssm = None   # Forward packets to lower layer SSM
-        self._ddpn = None   # Discard Downlink Packet Notification
-        self._bdpn = None   # Buffered Downlink Packet Notification
-        self._edrt = None   # Eliminate Duplicate Packets for Redundant Transmission
+        if len(self._ie_payload) == 2:
+            self._spare = None  # Spare
+            self._mbsu = None   # Forward and replicate MBS data using Unicast transport
+            self._fssm = None   # Forward packets to lower layer SSM
+            self._ddpn = None   # Discard Downlink Packet Notification
+            self._bdpn = None   # Buffered Downlink Packet Notification
+            self._edrt = None   # Eliminate Duplicate Packets for Redundant Transmission
         self._parse_data()
 
     def _parse_data(self):
