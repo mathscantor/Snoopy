@@ -1312,13 +1312,13 @@ class IE_ApplyAction(IE):
         self._forw = None   # Forward
         self._drop = None   # Drop
         # 2nd byte
-        if len(self._ie_payload) == 2:
-            self._spare = None  # Spare
-            self._mbsu = None   # Forward and replicate MBS data using Unicast transport
-            self._fssm = None   # Forward packets to lower layer SSM
-            self._ddpn = None   # Discard Downlink Packet Notification
-            self._bdpn = None   # Buffered Downlink Packet Notification
-            self._edrt = None   # Eliminate Duplicate Packets for Redundant Transmission
+
+        self._spare = None  # Spare
+        self._mbsu = None   # Forward and replicate MBS data using Unicast transport
+        self._fssm = None   # Forward packets to lower layer SSM
+        self._ddpn = None   # Discard Downlink Packet Notification
+        self._bdpn = None   # Buffered Downlink Packet Notification
+        self._edrt = None   # Eliminate Duplicate Packets for Redundant Transmission
         self._parse_data()
 
     def _parse_data(self):
@@ -1330,13 +1330,13 @@ class IE_ApplyAction(IE):
         self._buff = (self._ie_payload[0] >> 2) & 0x1
         self._forw = (self._ie_payload[0] >> 1) & 0x1
         self._drop = self._ie_payload[0] & 0x1
-
-        self._spare = (self._ie_payload[1] >> 5) & 0x1
-        self._mbsu = (self._ie_payload[1] >> 4) & 0x1
-        self._fssm = (self._ie_payload[1] >> 3) & 0x1
-        self._ddpn = (self._ie_payload[1] >> 2) & 0x1
-        self._bdpn = (self._ie_payload[1] >> 1) & 0x1
-        self._edrt = self._ie_payload[1] & 0x1
+        if len(self._ie_payload) == 2:
+            self._spare = (self._ie_payload[1] >> 5) & 0x1
+            self._mbsu = (self._ie_payload[1] >> 4) & 0x1
+            self._fssm = (self._ie_payload[1] >> 3) & 0x1
+            self._ddpn = (self._ie_payload[1] >> 2) & 0x1
+            self._bdpn = (self._ie_payload[1] >> 1) & 0x1
+            self._edrt = self._ie_payload[1] & 0x1
         return
 
     def _print_init(self):
